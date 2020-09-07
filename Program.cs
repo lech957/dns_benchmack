@@ -10,42 +10,45 @@ namespace dns_check
     {
         static void Main(string[] args)
         {
-            if (args.Length<2){
+            var cfg = DnsConfig.Load("config.json");
 
-                Console.WriteLine("First argument is log file path. Use hostnames as further arguments");
-                return;
-            }
-
-            var logFile=args[0];
-            var hosts = new List<string>(args.Skip(1));
+            var logFile=cfg.LogFile;;
+            var hosts = cfg.Names;
+            var interval = cfg.IntervalInSeconds;
             
-            while (true){
-                foreach(var h in hosts){
-                    try{
-                        var sp = System.Diagnostics.Stopwatch.StartNew();
-                        var a = Dns.GetHostEntry(h);
-                        sp.Stop();
-                        Log(logFile,$"{h}[{sp.Elapsed}]");
-                        System.Diagnostics.Debug.WriteLine($"{DateTime.Now}: {h}[{sp.Elapsed}]");
-                    }
-                    catch(System.Net.Sockets.SocketException ){
-                        Log(logFile,$"{h} NOT REACHABLE");
-                        System.Diagnostics.Debug.WriteLine($"{DateTime.Now}: {h} NOT REACHABLE");
-                    }
-                    catch(Exception exc){
-                        Log(logFile,$"{h} -> {exc}");
-                        System.Diagnostics.Debug.WriteLine($"{DateTime.Now}: {h} -> {exc}");
-                    }
-                }
-                System.Threading.Thread.Sleep(60*1000);
+            RunBenchmark(hosts,logFile,interval);
             }
 
             static void Log(string path, string msg)
             {
                 using (var sw = File.AppendText(path)){
                     sw.AutoFlush=true;
-                    sw.WriteLine($"{DateTime.Now}: {msg}");
+                    sw.WriteLine($"{DateTime.Now}\t{msg}");
                 }
+            }
+
+
+            static void RunBenchmark(IEnumerable<string> hosts, string logFile, int interval){
+                while (true){
+                foreach(var h in hosts){
+                    try{
+                        var sp = System.Diagnostics.Stopwatch.StartNew();
+                        var a = Dns.GetHostEntry(h);
+                        sp.Stop();
+                        Log(logFile,$"{h}\t[{sp.Elapsed}]");
+                        System.Diagnostics.Debug.WriteLine($"{DateTime.Now}: {h}[{sp.Elapsed}]");
+                    }
+                    catch(System.Net.Sockets.SocketException ){
+                        Log(logFile,$"{h}\tNOT REACHABLE");
+                        System.Diagnostics.Debug.WriteLine($"{DateTime.Now}: {h} NOT REACHABLE");
+                    }
+                    catch(Exception exc){
+                        Log(logFile,$"{h}\tERROR {exc}");
+                        System.Diagnostics.Debug.WriteLine($"{DateTime.Now}: {h} -> {exc}");
+                    }
+                }
+                Console.Write(".");
+                System.Threading.Thread.Sleep(interval*1000);
             }
         }
     }

@@ -1,0 +1,11 @@
+{
+
+    "Names": [
+        "google.com",
+        "bing.com"
+    ],
+    "Interval": 120,
+    "LogFile":"DnsLogFile.txt"
+
+
+}
