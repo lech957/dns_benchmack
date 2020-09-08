@@ -11,8 +11,14 @@ namespace dns_check
         static void Main(string[] args)
         {
             var cfg = DnsConfig.Load("config.json");
-
-            var logFile=cfg.LogFile;;
+            var logFile=cfg.LogFile;
+            if (args.Length >0 && args[0]=="bad"){
+                
+                ShowWorstResults(logFile);
+                ShowErrors(logFile);
+                return;
+            }
+            
             var hosts = cfg.Names;
             var interval = cfg.IntervalInSeconds;
             
@@ -27,6 +33,19 @@ namespace dns_check
                 }
             }
 
+            static void ShowWorstResults(string logFile){
+                Console.WriteLine("--------Worst results-----------------");
+                foreach (var le in LogEntry.GetWorstEntries(LogEntry.GetLogEntries(logFile))){
+                    Console.WriteLine(le);
+                }
+            }
+
+            static void ShowErrors(string logFile){
+                Console.WriteLine("--------Errors-----------------");
+                foreach (var le in LogEntry.GetErrorEntries(LogEntry.GetLogEntries(logFile))){
+                    Console.WriteLine(le);
+                }
+            }
 
             static void RunBenchmark(IEnumerable<string> hosts, string logFile, int interval){
                 while (true){
